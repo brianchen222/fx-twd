@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>今日匯率 · 兌新台幣</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  background: #f5f6f8; color: #1b1d21; padding: 20px; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1100px; margin: 0 auto; }
+.top { display:flex; justify-content:space-between; align-items:stretch; gap:18px; flex-wrap:wrap; margin-bottom:16px; }
+.lefttitle { flex:1 1 auto; min-width:240px; display:flex; flex-direction:column; }
+h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+.sub { color: #6b7280; font-size: 13px; margin-top: 4px; }
+.stamp { flex:0 0 auto; align-self:flex-start; text-align:right; background:#16a34a; color:#fff; border-radius:16px; padding:14px 22px; box-shadow:0 2px 6px rgba(22,163,74,.25); }
+.stamp .lab { font-size:12px; color:#d8f5e3; letter-spacing:3px; }
+.stamp .big { font-size:40px; font-weight:800; line-height:1.02; margin-top:3px; letter-spacing:1px; white-space:nowrap; }
+.stamp .time { font-size:14px; color:#c3ecd3; margin-top:4px; }
+@media (max-width:560px){ .stamp{ width:100%; text-align:left; } .stamp .big{ font-size:34px; } }
+.bar { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin:14px 0 18px; }
+.updated { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #4b5563;
+  background: #eceef1; border-radius: 999px; padding: 6px 12px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; display:inline-block; }
+.ranges { display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:18px; }
+.rbtn { border:1px solid #d8dbe0; background:#fff; color:#374151; border-radius:8px; padding:6px 13px;
+  font-size:13px; cursor:pointer; font-weight:600; }
+.rbtn.active { background:#1b1d21; color:#fff; border-color:#1b1d21; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background:#fff; border:1px solid #e6e8ec; border-radius:16px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,24,40,.05); }
+.head { display:flex; align-items:center; gap:9px; }
+.flag { font-size:24px; } .code { font-size:16px; font-weight:700; } .name { font-size:12px; color:#6b7280; }
+.head .rate { margin-left:auto; text-align:right; }
+.head .num { font-size:28px; font-weight:700; line-height:1; }
+.head .twd { font-size:11px; color:#9097a1; }
+.head .delta { font-size:11.5px; margin-top:2px; }
+.up { color:#d6336c; } .down { color:#2f9e44; } .flat{ color:#9097a1; }
+.chart-box { position:relative; height:180px; margin-top:12px; }
+.alert { background:#fff; border:1px solid #e6e8ec; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 1px 3px rgba(16,24,40,.05); }
+.alert h3 { font-size:14px; font-weight:700; margin-bottom:10px; }
+.alert .lo { background:#fff5f5; border:1px solid #ffc9c9; color:#c92a2a; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:8px; font-weight:600; }
+.alert .near { background:#fff9db; border:1px solid #ffe066; color:#8c6d1f; border-radius:10px; padding:10px 12px; font-size:12.5px; margin-bottom:10px; }
+.alert .none { background:#ebfbee; border:1px solid #b2f2bb; color:#2b8a3e; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:10px; font-weight:600; }
+.leans { display:flex; flex-wrap:wrap; gap:8px; }
+.lean { font-size:12.5px; border:1px solid #e6e8ec; border-radius:999px; padding:5px 11px; display:flex; gap:6px; align-items:center; }
+.lean b { font-weight:700; }
+.caveat { font-size:11px; color:#9097a1; margin-top:11px; line-height:1.5; }
+footer { margin-top:22px; font-size:11.5px; color:#9097a1; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="lefttitle">
+      <h1>今日匯率 · 兌新台幣 (TWD)</h1>
+      <div class="sub">瑞士法郎、美金、歐元、人民幣、日圓（兌台幣）＋ 咖啡期貨 — 即時行情與歷史走勢，六圖同步顯示</div>
+      <div class="ranges" id="ranges"></div>
+    </div>
+    <div class="stamp">
+      <div class="lab">資料更新</div>
+      <div class="big" id="stampDate">2026-06-03</div>
+      <div class="time" id="stampTime">08:02（台北）</div>
+    </div>
+  </div>
+
+  <div class="alert" id="alert"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    匯率資料來源：fawazahmed0 currency-api / exchangerate-api（市場中間匯率，與 MSN 財經顯示之中價一致，僅供參考，非銀行實際買賣牌價）。<br>
+    咖啡期貨：ICE 阿拉比卡咖啡 KC=F（Yahoo Finance，美分/磅 ¢/lb，近月連續合約，僅供參考）。<br>
+    歷史資料自 2024/03 起（免費資料源可回溯之最早日期），故最長區間為「Max」約 2 年 3 個月。<br>
+    匯率由排程每週一至週五早上 9:30 自動更新；咖啡期貨需透過瀏覽器抓取，自動更新視瀏覽器連線情況而定（詳見對話說明）。週末不更新。
+  </footer>
+</div>
+
+<script>
+const LABELS = ["2024-03-06","2024-05-01","2024-07-01","2024-09-02","2024-11-01","2025-01-02","2025-03-03","2025-05-01","2025-06-02","2025-07-01","2025-08-01","2025-09-01","2025-10-01","2025-11-03","2025-12-01","2026-01-02","2026-02-02","2026-03-02","2026-04-01","2026-04-22","2026-04-29","2026-05-06","2026-05-11","2026-05-15","2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-25","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-06-01","2026-06-02","2026-06-03"];
+const SERIES = {
+  CHF: {flag:"🇨🇭", name:"瑞士法郎", color:"#d6336c", dp:2, unit:"1 瑞士法郎", data:[35.73,35.47,36.11,37.65,37.04,36.17,36.48,38.79,36.46,36.91,36.89,38.24,38.25,38.25,39.08,39.71,40.91,40.89,40.01,40.33,40.02,40.33,40.32,40.16,40.21,40.26,40.10,40.13,40.08,40.12,40.21,40.02,39.84,39.99,40.04,40.00,39.96]},
+  USD: {flag:"🇺🇸", name:"美金",     color:"#1c7ed6", dp:2, unit:"1 美金",   data:[31.60,32.63,32.47,32.00,31.99,32.80,32.92,32.08,29.97,29.26,30.03,30.60,30.46,30.79,31.42,31.41,31.60,31.43,31.92,31.48,31.57,31.52,31.40,31.53,31.64,31.64,31.65,31.58,31.52,31.39,31.49,31.43,31.46,31.43,31.36,31.46,31.46]},
+  EUR: {flag:"🇪🇺", name:"歐元",     color:"#9c36b5", dp:2, unit:"1 歐元",   data:[34.28,34.79,34.94,35.37,34.81,33.97,34.30,36.27,34.07,34.48,34.27,35.81,35.76,35.49,36.44,36.95,37.52,37.05,36.92,36.97,36.97,36.94,36.92,36.74,36.77,36.83,36.74,36.70,36.61,36.53,36.64,36.58,36.46,36.54,36.52,36.61,36.58]},
+  CNY: {flag:"🇨🇳", name:"人民幣",   color:"#e8590c", dp:3, unit:"1 人民幣", data:[4.391,4.507,4.468,4.509,4.493,4.495,4.519,4.411,4.162,4.086,4.165,4.292,4.278,4.326,4.441,4.490,4.546,4.576,4.637,4.615,4.618,4.615,4.617,4.647,4.646,4.651,4.648,4.644,4.636,4.628,4.641,4.634,4.637,4.634,4.633,4.652,4.632]},
+  JPY: {flag:"🇯🇵", name:"日圓",     color:"#2f9e44", dp:4, unit:"100 日圓", data:[0.2107,0.2068,0.2018,0.2190,0.2101,0.2082,0.2189,0.2240,0.2088,0.2036,0.1991,0.2079,0.2059,0.1998,0.2019,0.2006,0.2039,0.2011,0.2012,0.1976,0.1978,0.1997,0.1998,0.1989,0.1991,0.1991,0.1993,0.1987,0.1982,0.1975,0.1981,0.1974,0.1972,0.1971,0.1966,0.1970,0.1966]},
+  COFFEE: {flag:"☕", name:"咖啡期貨 阿拉比卡", color:"#7b4b27", dp:1, unit:"ICE KC=F", qlab:"¢/lb", qword:"¢/lb", data:[188.9,222.4,229.2,248.2,321.6,377.9,379.8,342.5,342.5,295.8,396.9,374.9,392.0,413.0,348.8,357.3,333.3,288.4,297.8,302.4,305.3,299.5,298.6,284.6,276.2,270.1,268.3,273.4,272.4,272.4,274.0,269.9,274.3,265.6,260.6,259.1,259.2]},
+};
+const RANGES = [
+  {key:"MAX", label:"Max", days:99999},
+  {key:"2Y",  label:"2Y",  days:731},
+  {key:"1Y",  label:"1Y",  days:366},
+  {key:"6M",  label:"6M",  days:183},
+  {key:"3M",  label:"3M",  days:92},
+  {key:"1M",  label:"1M",  days:31},
+  {key:"14D", label:"14D", days:14},
+];
+let activeRange = "1Y";
+const lastDate = new Date(LABELS[LABELS.length-1]);
+
+function fmt(iso, longRange){
+  const [y,m,d] = iso.split("-");
+  return longRange ? (y.slice(2)+"/"+m) : (m+"/"+d);
+}
+function sliceByRange(rangeKey){
+  const r = RANGES.find(x=>x.key===rangeKey);
+  const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate()-r.days);
+  const idx = LABELS.map((l,i)=> new Date(l) >= cutoff ? i : -1).filter(i=>i>=0);
+  return idx;
+}
+
+const grid = document.getElementById('grid');
+const charts = {};
+function buildCards(){
+  grid.innerHTML="";
+  const longRange = (activeRange==="MAX"||activeRange==="2Y"||activeRange==="1Y");
+  const idx = sliceByRange(activeRange);
+  const labels = idx.map(i=>fmt(LABELS[i], longRange));
+  Object.entries(SERIES).forEach(([code,s])=>{
+    const data = idx.map(i=>s.data[i]);
+    const last = data[data.length-1], first = data[0];
+    const shown = code==="JPY" ? (last*100) : last;
+    const diff = last-first, pct = (diff/first*100);
+    const cls = Math.abs(pct)<0.005 ? "flat" : (diff>0?"up":"down");
+    const arrow = cls==="flat" ? "—" : (diff>0?"▲":"▼");
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML = `
+      <div class="head">
+        <span class="flag">${s.flag}</span>
+        <div><div class="code">${code}</div><div class="name">${s.name}</div></div>
+        <div class="rate">
+          <div class="num">${shown.toFixed(code==="JPY"?2:s.dp)}</div>
+          <div class="twd">${s.qlab||'TWD'} · ${s.unit}</div>
+          <div class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(2)}%（區間）</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas></canvas></div>`;
+    grid.appendChild(card);
+    const ctx = card.querySelector('canvas').getContext('2d');
+    charts[code] = new Chart(ctx, {
+      type:'line',
+      data:{ labels, datasets:[{ data, borderColor:s.color, backgroundColor:s.color+'22',
+        borderWidth:2.5, tension:.25, pointRadius: data.length>20?0:2, pointBackgroundColor:s.color, fill:true }] },
+      options:{ responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>'  '+c.parsed.y.toFixed(s.dp)+' '+(s.qword||'台幣') } } },
+        scales:{ y:{ beginAtZero:false, grid:{color:'#eef0f3'}, ticks:{color:'#9097a1', font:{size:10}} },
+                 x:{ grid:{display:false}, ticks:{color:'#9097a1', font:{size:10}, maxRotation:0, autoSkip:true, maxTicksLimit:7} } } }
+    });
+  });
+}
+
+function renderAlert(){
+  const el = document.getElementById('alert');
+  const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate()-14);
+  const idx = LABELS.map((l,i)=> new Date(l) >= cutoff ? i : -1).filter(i=>i>=0);
+  const lows=[], near=[], leans=[];
+  Object.entries(SERIES).forEach(([code,s])=>{
+    const w = idx.map(i=>s.data[i]);
+    const today=w[w.length-1], lo=Math.min(...w), hi=Math.max(...w);
+    const pos = hi>lo ? (today-lo)/(hi-lo)*100 : 0;
+    const fromLo = (today-lo)/lo*100;
+    const p1 = ((today - w[w.length-2])/today)*100;
+    const p3 = ((today - w[Math.max(0,w.length-4)])/today)*100;
+    const p5 = ((today - w[Math.max(0,w.length-6)])/today)*100;
+    if(fromLo <= 0.1) lows.push({code,s,today,lo});
+    else if(fromLo <= 0.5 && pos < 35) near.push({code,s,fromLo});
+    let lean="持平", cls="flat";
+    if(p3<=-0.15 && p5<=-0.10){ lean="偏跌"; cls="down"; }
+    else if(p3>=0.15 && p5>=0.10){ lean="偏漲"; cls="up"; }
+    if(fromLo<=0.1 && p1>0.05){ lean="持平略反彈"; cls="flat"; }
+    leans.push({code,s,lean,cls});
+  });
+  const disp = (code,s)=> code==="JPY" ? (s.data[s.data.length-1]*100).toFixed(2)+"（100日圓）" : s.data[s.data.length-1].toFixed(s.dp);
+  let html = '<h3>⚠️ 近 14 天相對低點警示</h3>';
+  if(lows.length){
+    html += '<div class="lo">觸及 14 天低點：' + lows.map(x=>`${x.s.flag} ${x.code} ${x.s.name}（${disp(x.code,x.s)} ${x.s.qword||'台幣'}）`).join('、') + '。若打算趁低點換匯／進貨可留意。</div>';
+  } else {
+    html += '<div class="none">目前沒有幣別觸及 14 天低點。</div>';
+  }
+  if(near.length){
+    html += '<div class="near">接近低檔（距 14 天低點 &lt;0.5%、位於區間下緣）：' + near.map(x=>`${x.code} ${x.s.name}（+${x.fromLo.toFixed(2)}%）`).join('、') + '。</div>';
+  }
+  html += '<h3 style="margin-top:6px;">明日方向研判（純技術動能）</h3>';
+  html += '<div class="leans">' + leans.map(x=>{
+    const color = x.cls==="up" ? "#d6336c" : (x.cls==="down" ? "#2f9e44" : "#6b7280");
+    const arrow = x.cls==="up" ? "▲" : (x.cls==="down" ? "▼" : "→");
+    return `<span class="lean">${x.s.flag} ${x.code}<b style="color:${color}">${arrow} ${x.lean}</b></span>`;
+  }).join('') + '</div>';
+  html += '<div class="caveat">方向研判僅根據近期價格動能（近 3 日／5 日變化）推估，非預測保證、非財務建議。外匯短期受央行、消息面、突發事件影響極大，無法準確預測隔日漲跌，請勿單憑此換匯或交易。</div>';
+  el.innerHTML = html;
+}
+
+const rangesEl = document.getElementById('ranges');
+RANGES.forEach(r=>{
+  const b=document.createElement('button');
+  b.className='rbtn'+(r.key===activeRange?' active':''); b.textContent=r.label;
+  b.onclick=()=>{ activeRange=r.key; [...rangesEl.children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); buildCards(); };
+  rangesEl.appendChild(b);
+});
+renderAlert();
+buildCards();
+</script>
+</body>
+</html>
