@@ -20,16 +20,13 @@ h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
 .stamp .big { font-size:40px; font-weight:800; line-height:1.02; margin-top:3px; letter-spacing:1px; white-space:nowrap; }
 .stamp .time { font-size:14px; color:#c3ecd3; margin-top:4px; }
 @media (max-width:560px){ .stamp{ width:100%; text-align:left; } .stamp .big{ font-size:34px; } }
-.bar { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin:14px 0 18px; }
-.updated { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #4b5563;
-  background: #eceef1; border-radius: 999px; padding: 6px 12px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; display:inline-block; }
 .ranges { display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:18px; }
 .rbtn { border:1px solid #d8dbe0; background:#fff; color:#374151; border-radius:8px; padding:6px 13px;
   font-size:13px; cursor:pointer; font-weight:600; }
 .rbtn.active { background:#1b1d21; color:#fff; border-color:#1b1d21; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
 .card { background:#fff; border:1px solid #e6e8ec; border-radius:16px; padding:16px 18px; box-shadow:0 1px 3px rgba(16,24,40,.05); }
+.card.lowcard { background:#fff5f5; border:2px solid #fa5252; box-shadow:0 0 0 4px rgba(250,82,82,.12), 0 1px 3px rgba(16,24,40,.05); }
 .head { display:flex; align-items:center; gap:9px; }
 .flag { font-size:24px; } .code { font-size:16px; font-weight:700; } .name { font-size:12px; color:#6b7280; }
 .head .rate { margin-left:auto; text-align:right; }
@@ -37,16 +34,16 @@ h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
 .head .twd { font-size:11px; color:#9097a1; }
 .head .delta { font-size:11.5px; margin-top:2px; }
 .up { color:#d6336c; } .down { color:#2f9e44; } .flat{ color:#9097a1; }
+.badges { display:flex; flex-wrap:wrap; gap:7px; margin-top:11px; }
+.badge { font-size:11.5px; border-radius:999px; padding:4px 11px; font-weight:700; display:inline-flex; align-items:center; gap:5px; }
+.badge.lowb { background:#c92a2a; color:#fff; }
+.badge.lowb .blink { width:8px; height:8px; border-radius:50%; background:#fff; animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.15;} }
+.badge.nearb { background:#fff9db; color:#8c6d1f; border:1px solid #ffe066; }
+.badge.lean-up { background:#fff0f6; color:#d6336c; border:1px solid #fcc2d7; }
+.badge.lean-down { background:#ebfbee; color:#2f9e44; border:1px solid #b2f2bb; }
+.badge.lean-flat { background:#f1f3f5; color:#6b7280; border:1px solid #dee2e6; }
 .chart-box { position:relative; height:180px; margin-top:12px; }
-.alert { background:#fff; border:1px solid #e6e8ec; border-radius:16px; padding:16px 18px; margin-bottom:14px; box-shadow:0 1px 3px rgba(16,24,40,.05); }
-.alert h3 { font-size:14px; font-weight:700; margin-bottom:10px; }
-.alert .lo { background:#fff5f5; border:1px solid #ffc9c9; color:#c92a2a; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:8px; font-weight:600; }
-.alert .near { background:#fff9db; border:1px solid #ffe066; color:#8c6d1f; border-radius:10px; padding:10px 12px; font-size:12.5px; margin-bottom:10px; }
-.alert .none { background:#ebfbee; border:1px solid #b2f2bb; color:#2b8a3e; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:10px; font-weight:600; }
-.leans { display:flex; flex-wrap:wrap; gap:8px; }
-.lean { font-size:12.5px; border:1px solid #e6e8ec; border-radius:999px; padding:5px 11px; display:flex; gap:6px; align-items:center; }
-.lean b { font-weight:700; }
-.caveat { font-size:11px; color:#9097a1; margin-top:11px; line-height:1.5; }
 footer { margin-top:22px; font-size:11.5px; color:#9097a1; line-height:1.6; }
 </style>
 </head>
@@ -55,7 +52,7 @@ footer { margin-top:22px; font-size:11.5px; color:#9097a1; line-height:1.6; }
   <div class="top">
     <div class="lefttitle">
       <h1>今日匯率 · 兌新台幣 (TWD)</h1>
-      <div class="sub">瑞士法郎、美金、歐元、人民幣、日圓（兌台幣）＋ 咖啡期貨 — 即時行情與歷史走勢，六圖同步顯示</div>
+      <div class="sub">瑞士法郎、美金、歐元、人民幣、日圓（兌台幣）＋ 咖啡期貨 — 紅底卡片＝今日觸及近 14 天低點</div>
       <div class="ranges" id="ranges"></div>
     </div>
     <div class="stamp">
@@ -65,15 +62,12 @@ footer { margin-top:22px; font-size:11.5px; color:#9097a1; line-height:1.6; }
     </div>
   </div>
 
-  <div class="alert" id="alert"></div>
-
   <div class="grid" id="grid"></div>
 
   <footer>
-    匯率資料來源：fawazahmed0 currency-api / exchangerate-api（市場中間匯率，與 MSN 財經顯示之中價一致，僅供參考，非銀行實際買賣牌價）。<br>
-    咖啡期貨：ICE 阿拉比卡咖啡 KC=F（Yahoo Finance，美分/磅 ¢/lb，近月連續合約，僅供參考）。<br>
-    歷史資料自 2024/03 起（免費資料源可回溯之最早日期），故最長區間為「Max」約 2 年 3 個月。<br>
-    匯率由排程每週一至週五早上 9:30 自動更新；咖啡期貨需透過瀏覽器抓取，自動更新視瀏覽器連線情況而定（詳見對話說明）。週末不更新。
+    每張卡片內：「明日研判」徽章＝明日漲跌方向推估（依近 3／5 日價格動能，非預測保證、非財務建議，請勿單憑此換匯或交易）；紅色「觸及14天低點」徽章＋整張紅底＝該項目今日觸及近 14 天最低，若打算趁低點換匯／進貨可留意；黃色「接近低檔」＝距 14 天低點 0.5% 以內。<br>
+    匯率資料來源：fawazahmed0 currency-api / exchangerate-api（市場中間匯率，與 MSN 財經顯示之中價一致，僅供參考，非銀行實際買賣牌價）。咖啡期貨：ICE 阿拉比卡 KC=F（Yahoo Finance，美分/磅 ¢/lb，近月連續合約）。<br>
+    歷史資料自 2024/03 起（免費資料源可回溯之最早日期），最長區間「Max」約 2 年 3 個月。每週一至週五台北 09:20 起自動更新（每小時自動補跑至 15:20）；週末不更新。右上角為最後一次更新完成時間。
   </footer>
 </div>
 
@@ -110,6 +104,28 @@ function sliceByRange(rangeKey){
   return idx;
 }
 
+function compute14d(){
+  const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate()-14);
+  const idx = LABELS.map((l,i)=> new Date(l) >= cutoff ? i : -1).filter(i=>i>=0);
+  const out = {};
+  Object.entries(SERIES).forEach(([code,s])=>{
+    const w = idx.map(i=>s.data[i]);
+    const today=w[w.length-1], lo=Math.min(...w), hi=Math.max(...w);
+    const pos = hi>lo ? (today-lo)/(hi-lo)*100 : 0;
+    const fromLo = (today-lo)/lo*100;
+    const p1 = ((today - w[w.length-2])/today)*100;
+    const p3 = ((today - w[Math.max(0,w.length-4)])/today)*100;
+    const p5 = ((today - w[Math.max(0,w.length-6)])/today)*100;
+    let lean="持平", cls="flat";
+    if(p3<=-0.15 && p5<=-0.10){ lean="偏跌"; cls="down"; }
+    else if(p3>=0.15 && p5>=0.10){ lean="偏漲"; cls="up"; }
+    if(fromLo<=0.1 && p1>0.05){ lean="持平略反彈"; cls="flat"; }
+    out[code] = { low: fromLo<=0.1, near: fromLo>0.1 && fromLo<=0.5 && pos<35, lean, cls, fromLo };
+  });
+  return out;
+}
+const STATS = compute14d();
+
 const grid = document.getElementById('grid');
 const charts = {};
 function buildCards(){
@@ -118,13 +134,20 @@ function buildCards(){
   const idx = sliceByRange(activeRange);
   const labels = idx.map(i=>fmt(LABELS[i], longRange));
   Object.entries(SERIES).forEach(([code,s])=>{
+    const st = STATS[code];
     const data = idx.map(i=>s.data[i]);
     const last = data[data.length-1], first = data[0];
     const shown = code==="JPY" ? (last*100) : last;
     const diff = last-first, pct = (diff/first*100);
     const cls = Math.abs(pct)<0.005 ? "flat" : (diff>0?"up":"down");
     const arrow = cls==="flat" ? "—" : (diff>0?"▲":"▼");
-    const card=document.createElement('div'); card.className='card';
+    const leanArrow = st.cls==="up" ? "▲" : (st.cls==="down" ? "▼" : "→");
+    let badges = "";
+    if(st.low) badges += `<span class="badge lowb"><span class="blink"></span>⚠️ 觸及14天低點</span>`;
+    else if(st.near) badges += `<span class="badge nearb">接近14天低檔（+${st.fromLo.toFixed(2)}%）</span>`;
+    badges += `<span class="badge lean-${st.cls}">明日研判 ${leanArrow} ${st.lean}</span>`;
+    const card=document.createElement('div');
+    card.className='card'+(st.low?' lowcard':'');
     card.innerHTML = `
       <div class="head">
         <span class="flag">${s.flag}</span>
@@ -135,6 +158,7 @@ function buildCards(){
           <div class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(2)}%（區間）</div>
         </div>
       </div>
+      <div class="badges">${badges}</div>
       <div class="chart-box"><canvas></canvas></div>`;
     grid.appendChild(card);
     const ctx = card.querySelector('canvas').getContext('2d');
@@ -150,47 +174,6 @@ function buildCards(){
   });
 }
 
-function renderAlert(){
-  const el = document.getElementById('alert');
-  const cutoff = new Date(lastDate); cutoff.setDate(cutoff.getDate()-14);
-  const idx = LABELS.map((l,i)=> new Date(l) >= cutoff ? i : -1).filter(i=>i>=0);
-  const lows=[], near=[], leans=[];
-  Object.entries(SERIES).forEach(([code,s])=>{
-    const w = idx.map(i=>s.data[i]);
-    const today=w[w.length-1], lo=Math.min(...w), hi=Math.max(...w);
-    const pos = hi>lo ? (today-lo)/(hi-lo)*100 : 0;
-    const fromLo = (today-lo)/lo*100;
-    const p1 = ((today - w[w.length-2])/today)*100;
-    const p3 = ((today - w[Math.max(0,w.length-4)])/today)*100;
-    const p5 = ((today - w[Math.max(0,w.length-6)])/today)*100;
-    if(fromLo <= 0.1) lows.push({code,s,today,lo});
-    else if(fromLo <= 0.5 && pos < 35) near.push({code,s,fromLo});
-    let lean="持平", cls="flat";
-    if(p3<=-0.15 && p5<=-0.10){ lean="偏跌"; cls="down"; }
-    else if(p3>=0.15 && p5>=0.10){ lean="偏漲"; cls="up"; }
-    if(fromLo<=0.1 && p1>0.05){ lean="持平略反彈"; cls="flat"; }
-    leans.push({code,s,lean,cls});
-  });
-  const disp = (code,s)=> code==="JPY" ? (s.data[s.data.length-1]*100).toFixed(2)+"（100日圓）" : s.data[s.data.length-1].toFixed(s.dp);
-  let html = '<h3>⚠️ 近 14 天相對低點警示</h3>';
-  if(lows.length){
-    html += '<div class="lo">觸及 14 天低點：' + lows.map(x=>`${x.s.flag} ${x.code} ${x.s.name}（${disp(x.code,x.s)} ${x.s.qword||'台幣'}）`).join('、') + '。若打算趁低點換匯／進貨可留意。</div>';
-  } else {
-    html += '<div class="none">目前沒有幣別觸及 14 天低點。</div>';
-  }
-  if(near.length){
-    html += '<div class="near">接近低檔（距 14 天低點 &lt;0.5%、位於區間下緣）：' + near.map(x=>`${x.code} ${x.s.name}（+${x.fromLo.toFixed(2)}%）`).join('、') + '。</div>';
-  }
-  html += '<h3 style="margin-top:6px;">明日方向研判（純技術動能）</h3>';
-  html += '<div class="leans">' + leans.map(x=>{
-    const color = x.cls==="up" ? "#d6336c" : (x.cls==="down" ? "#2f9e44" : "#6b7280");
-    const arrow = x.cls==="up" ? "▲" : (x.cls==="down" ? "▼" : "→");
-    return `<span class="lean">${x.s.flag} ${x.code}<b style="color:${color}">${arrow} ${x.lean}</b></span>`;
-  }).join('') + '</div>';
-  html += '<div class="caveat">方向研判僅根據近期價格動能（近 3 日／5 日變化）推估，非預測保證、非財務建議。外匯短期受央行、消息面、突發事件影響極大，無法準確預測隔日漲跌，請勿單憑此換匯或交易。</div>';
-  el.innerHTML = html;
-}
-
 const rangesEl = document.getElementById('ranges');
 RANGES.forEach(r=>{
   const b=document.createElement('button');
@@ -198,7 +181,6 @@ RANGES.forEach(r=>{
   b.onclick=()=>{ activeRange=r.key; [...rangesEl.children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); buildCards(); };
   rangesEl.appendChild(b);
 });
-renderAlert();
 buildCards();
 </script>
 </body>
