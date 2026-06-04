@@ -1,5 +1,7 @@
 // Daily FX + Coffee updater for GitHub Pages (runs in GitHub Actions, no token needed)
 // Reads index.html, appends today's data point, rewrites arrays + update stamp.
+// Stamp (top-right) = the ACTUAL run completion time (Taipei, with seconds),
+// so the user can verify the pipeline ran. Data labels use the FX provider's data date.
 const fs = require('fs');
 const FILE = 'index.html';
 
@@ -25,10 +27,9 @@ function getSeries(html, name) {
   // --- 1. latest FX (exchangerate-api, base TWD) ---
   const fx = await getJSON('https://open.er-api.com/v6/latest/TWD');
   const rates = fx.rates;
-  const updUnix = fx.time_last_update_unix * 1000;
-  const tpe = new Date(updUnix + 8 * 3600 * 1000); // Taipei = UTC+8
-  const dateStr = tpe.toISOString().slice(0, 10);
-  const timeStr = tpe.toISOString().slice(11, 16) + '（台北）'; // （台北）
+  // data date (provider timestamp, Taipei) -> used for chart labels
+  const dataTpe = new Date(fx.time_last_update_unix * 1000 + 8 * 3600 * 1000);
+  const dateStr = dataTpe.toISOString().slice(0, 10);
   const fxv = {
     CHF: +(1 / rates.CHF).toFixed(2),
     USD: +(1 / rates.USD).toFixed(2),
@@ -65,7 +66,7 @@ function getSeries(html, name) {
     if (coffee != null) series.COFFEE[i] = coffee;
   }
 
-  // --- 5. re-inject ---
+  // --- 5. re-inject data ---
   html = html.replace(/const LABELS = \[.*?\];/s, 'const LABELS = ' + JSON.stringify(labels) + ';');
   for (const k of ['CHF', 'USD', 'EUR', 'CNY', 'JPY', 'COFFEE']) {
     html = html.replace(
@@ -73,9 +74,14 @@ function getSeries(html, name) {
       '$1[' + series[k].join(',') + ']'
     );
   }
-  html = html.replace(/(id="stampDate">)[^<]*(<)/, '$1' + dateStr + '$2');
-  html = html.replace(/(id="stampTime">)[^<]*(<)/, '$1' + timeStr + '$2');
+
+  // --- 6. stamp = actual run completion time (Taipei, with seconds) ---
+  const runTpe = new Date(Date.now() + 8 * 3600 * 1000);
+  const stampDate = runTpe.toISOString().slice(0, 10);
+  const stampTime = runTpe.toISOString().slice(11, 19) + '（台北）';
+  html = html.replace(/(id="stampDate">)[^<]*(<)/, '$1' + stampDate + '$2');
+  html = html.replace(/(id="stampTime">)[^<]*(<)/, '$1' + stampTime + '$2');
 
   fs.writeFileSync(FILE, html);
-  console.log('OK', dateStr, fxv, 'coffee=' + coffee, 'points=' + labels.length);
+  console.log('OK run=' + stampDate + ' ' + stampTime, 'dataDate=' + dateStr, fxv, 'coffee=' + coffee, 'points=' + labels.length);
 })();
